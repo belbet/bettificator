@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	retrievor "github.com/belbet/retrievor"
 	"github.com/caarlos0/env"
-	retrievor "github.com/estebgonza/belb-retrievor"
 	"github.com/urfave/cli/v2"
 	rdb "gopkg.in/rethinkdb/rethinkdb-go.v6"
 )
