@@ -154,7 +154,7 @@ func main() {
 				},
 				&cli.BoolFlag{
 					Name:        "dry-run",
-					Usage:       "End date for parsing. Format: \"2006-01-02\"",
+					Usage:       "Parse all matches in date range but does not insert into database",
 					Aliases:     []string{"d"},
 					Required:    false,
 					DefaultText: "false",
