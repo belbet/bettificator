@@ -59,7 +59,6 @@ type database struct {
 	Type     string `long:"type" description:"the type of database used: only rethinkdb for now" env:"DB_TYPE" envDefault:"rethinkdb"`
 	Db       string `long:"db" description:"the name of the db" env:"DB_NAME" envDefault:"test"`
 	Table    string `long:"table" description:"the name of the table" env:"DB_TABLE" envDefault:"test"`
-	Test     bool   `long:"test" description:"if the function is running in a test env, set to true to skip database interaction" env:"ENVTEST" envDefault:"true"`
 }
 
 func getDatabaseConfig() database {
@@ -86,6 +85,7 @@ func retrieve(c *cli.Context) error {
 	var b = &DateStruct{}
 	startDate := c.String("start-date")
 	endDate := c.String("end-date")
+	dryRun := c.String("dry-run")
 	b.setDates(startDate, endDate)
 	endDay, _ := strconv.Atoi(b.EndDate.Day)
 	endMonth, _ := strconv.Atoi(b.EndDate.Month)
@@ -102,9 +102,10 @@ func retrieve(c *cli.Context) error {
 					break
 				}
 				r := retrievor.MatchesResult{}
-				date := strconv.Itoa(y) + "-" + strconv.Itoa(m) + "-" + strconv.Itoa(dd)
+				date := fmt.Sprintf("%d-%02d-%02d", y, m, dd)
+				// := strconv.Itoa(y) + "-" + strconv.Itoa(m) + "-" + strconv.Itoa(dd)
 				r.ParsePage(date)
-				if !d.Test {
+				if dryRun != "true" {
 					err := rdb.DB(d.Db).Table(d.Table).Insert(r.Matches).Exec(session)
 					if err != nil {
 						return err
@@ -150,6 +151,13 @@ func main() {
 					Aliases:     []string{"e"},
 					Required:    true,
 					DefaultText: "2020-12-31",
+				},
+				&cli.BoolFlag{
+					Name:        "dry-run",
+					Usage:       "End date for parsing. Format: \"2006-01-02\"",
+					Aliases:     []string{"d"},
+					Required:    false,
+					DefaultText: "false",
 				},
 			},
 		},
