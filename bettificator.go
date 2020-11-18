@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 
 	retrievor "github.com/belbet/retrievor"
 	"github.com/caarlos0/env"
@@ -78,48 +78,44 @@ var (
 	})
 )
 
-// Handler is executed by AWS Lambda in the main function. Once the request
-// is processed, it returns an Amazon API Gateway response object to AWS Lambda
-func retrieve(c *cli.Context) error {
-	fmt.Println("Bettificator")
-	var b = &DateStruct{}
+func clubs(c *cli.Context) error {
+	log.Println("Start clubs retrieving...")
+	var p = retrievor.ClubParse{}
+	var countries = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1"}
+	// Iterate trough all pages
+	for _, e := range countries {
+		p.CurrentPage = e
+		p.ParseAll()
+	}
+	err := rdb.DB(d.Db).Table(d.Table).Insert(p.Clubs).Exec(session)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func matches(c *cli.Context) error {
+	log.Println("Start matches retrieving...")
 	startDate := c.String("start-date")
 	endDate := c.String("end-date")
 	dryRun := c.String("dry-run")
-	b.setDates(startDate, endDate)
-	endDay, _ := strconv.Atoi(b.EndDate.Day)
-	endMonth, _ := strconv.Atoi(b.EndDate.Month)
-	endYear, _ := strconv.Atoi(b.EndDate.Year)
-	br := false
-	y, _ := strconv.Atoi(b.StartDate.Year)
-	m, _ := strconv.Atoi(b.StartDate.Month)
-	dd, _ := strconv.Atoi(b.StartDate.Day)
-	for ; y <= endYear; y++ {
-		for ; m <= 12; m++ {
-			for ; dd <= 31; dd++ {
-				if dd == endDay && m == endMonth && y == endYear {
-					br = true
-					break
-				}
-				r := retrievor.MatchesResult{}
-				date := fmt.Sprintf("%d-%02d-%02d", y, m, dd)
-				// := strconv.Itoa(y) + "-" + strconv.Itoa(m) + "-" + strconv.Itoa(dd)
-				r.ParsePage(date)
-				if dryRun != "true" {
-					err := rdb.DB(d.Db).Table(d.Table).Insert(r.Matches).Exec(session)
-					if err != nil {
-						return err
-					}
-				}
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		return err
+	}
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		return err
+	}
+	for t := start; t.After(end) == false; t = t.AddDate(0, 0, 1) {
+		r := retrievor.MatchesResult{}
+		date := t.Format("2006-01-02")
+		r.ParsePage(date)
+		if dryRun != "true" {
+			err := rdb.DB(d.Db).Table(d.Table).Insert(r.Matches).Exec(session)
+			if err != nil {
+				return err
 			}
-			dd = 1
-			if br {
-				break
-			}
-		}
-		m = 1
-		if br {
-			break
 		}
 	}
 	return nil
@@ -134,35 +130,47 @@ func main() {
 
 	app.Commands = []*cli.Command{
 		{
-			Name:   "retrieve",
-			Usage:  "Retrieve matches between startDate and endDate",
-			Action: retrieve,
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:        "start-date",
-					Usage:       "Starting date for parsing. Format: \"2006-01-02\"",
-					Aliases:     []string{"s"},
-					Required:    true,
-					DefaultText: "2009-01-31",
+			Name:    "retrieve",
+			Aliases: []string{"r"},
+			Usage:   "Fetch required data. ",
+			Subcommands: []*cli.Command{
+				{
+					Name:   "clubs",
+					Usage:  "Retrieve all clubs",
+					Action: clubs,
 				},
-				&cli.StringFlag{
-					Name:        "end-date",
-					Usage:       "End date for parsing. Format: \"2006-01-02\"",
-					Aliases:     []string{"e"},
-					Required:    true,
-					DefaultText: "2020-12-31",
-				},
-				&cli.BoolFlag{
-					Name:        "dry-run",
-					Usage:       "Parse all matches in date range but does not insert into database",
-					Aliases:     []string{"d"},
-					Required:    false,
-					DefaultText: "false",
+				{
+					Name:   "matches",
+					Usage:  "Retrieve matches between startDate and endDate",
+					Action: matches,
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:        "start-date",
+							Usage:       "Starting date for parsing. Format: \"2006-01-02\"",
+							Aliases:     []string{"s"},
+							Required:    true,
+							DefaultText: "2009-01-31",
+						},
+						&cli.StringFlag{
+							Name:        "end-date",
+							Usage:       "End date for parsing. Format: \"2006-01-02\"",
+							Aliases:     []string{"e"},
+							Required:    true,
+							DefaultText: "2020-12-31",
+						},
+						&cli.BoolFlag{
+							Name:        "dry-run",
+							Usage:       "Parse all matches in date range but does not insert into database",
+							Aliases:     []string{"d"},
+							Required:    false,
+							DefaultText: "false",
+						},
+					},
 				},
 			},
 		},
 	}
-	log.Println("Start retrieving...")
+	log.Println("Bettificator")
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
