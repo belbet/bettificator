@@ -81,15 +81,18 @@ var (
 func clubs(c *cli.Context) error {
 	log.Println("Start clubs retrieving...")
 	var p = retrievor.ClubParse{}
+	dryRun := c.String("dry-run")
 	var countries = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1"}
 	// Iterate trough all pages
 	for _, e := range countries {
 		p.CurrentPage = e
 		p.ParseAll()
 	}
-	err := rdb.DB(d.Db).Table(d.Table).Insert(p.Clubs).Exec(session)
-	if err != nil {
-		return err
+	if dryRun != "true" {
+		err := rdb.DB(d.Db).Table(d.Table).Insert(p.Clubs).Exec(session)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -138,6 +141,15 @@ func main() {
 					Name:   "clubs",
 					Usage:  "Retrieve all clubs",
 					Action: clubs,
+					Flags: []cli.Flag{
+						&cli.BoolFlag{
+							Name:        "dry-run",
+							Usage:       "Parse all clubs does not insert into database",
+							Aliases:     []string{"d"},
+							Required:    false,
+							DefaultText: "false",
+						},
+					},
 				},
 				{
 					Name:   "matches",
