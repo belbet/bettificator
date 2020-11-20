@@ -3,8 +3,8 @@ github.com/PuerkitoBio/goquery v1.6.0 h1:j7taAbelrdcsOlGeMenZxc2AWXD5fieT1/znArd
 github.com/PuerkitoBio/goquery v1.6.0/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBKeU+7zCJoLcc=
 github.com/andybalholm/cascadia v1.1.0 h1:BuuO6sSfQNFRu1LppgbD25Hr2vLYW25JvxHs5zzsLTo=
 github.com/andybalholm/cascadia v1.1.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
-github.com/belbet/retrievor v0.0.0-20201115223101-a88bbc9a6b3c h1:+ukNM80CpJymJsi6Cz3I3adleN4QvCMpXv13o5PzYXU=
-github.com/belbet/retrievor v0.0.0-20201115223101-a88bbc9a6b3c/go.mod h1:dTrDSDQYImLdWUqj/Wrs9GvymTTXqpg8YUeAYzaohaY=
+github.com/belbet/retrievor v0.0.0-20201120135430-320688ede9f1 h1:tiIaWytSlJmSyTDwPt6vHRgR3IyIpydOOWYuzppIIDc=
+github.com/belbet/retrievor v0.0.0-20201120135430-320688ede9f1/go.mod h1:dTrDSDQYImLdWUqj/Wrs9GvymTTXqpg8YUeAYzaohaY=
 github.com/bitly/go-hostpool v0.1.0 h1:XKmsF6k5el6xHG3WPJ8U0Ku/ye7njX7W81Ng7O2ioR0=
 github.com/bitly/go-hostpool v0.1.0/go.mod h1:4gOCgp6+NZnVqlKyZ/iBZFTAJKembaVENUpMkpg42fw=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 h1:DDGfHa7BWjL4YnC6+E63dPcxHo2sUxDIu8g3QgEJdRY=

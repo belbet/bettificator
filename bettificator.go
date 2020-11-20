@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	retrievor "github.com/belbet/retrievor"
@@ -39,16 +38,8 @@ type DateStruct struct {
 	} `json:"end_date"`
 }
 
-func (ds *DateStruct) setDates(s string, e string) {
-	sd := strings.Split(s, "-")
-	ds.StartDate.Year = sd[0]
-	ds.StartDate.Month = sd[1]
-	ds.StartDate.Day = sd[2]
-
-	ed := strings.Split(e, "-")
-	ds.EndDate.Year = ed[0]
-	ds.EndDate.Month = ed[1]
-	ds.EndDate.Day = ed[2]
+type jobStruct struct {
+	t time.Time
 }
 
 type database struct {
@@ -97,11 +88,29 @@ func clubs(c *cli.Context) error {
 	return nil
 }
 
+func worker(job <-chan jobStruct, results chan<- bool, c *cli.Context) {
+	for j := range job {
+		r := retrievor.MatchesResult{}
+		date := j.t.Format("2006-01-02")
+		dryRun := c.String("dry-run")
+		err := r.ParsePage(date)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if dryRun != "true" {
+			err := rdb.DB(d.Db).Table(d.Table).Insert(r.Matches).Exec(session)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+		results <- true
+	}
+}
+
 func matches(c *cli.Context) error {
 	log.Println("Start matches retrieving...")
 	startDate := c.String("start-date")
 	endDate := c.String("end-date")
-	dryRun := c.String("dry-run")
 	start, err := time.Parse("2006-01-02", startDate)
 	if err != nil {
 		return err
@@ -110,16 +119,25 @@ func matches(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	// Init threads
+	const threads = 8
+	nDays := int(end.Sub(start).Hours() / 24)
+	jobs := make(chan jobStruct, nDays)
+	results := make(chan bool, nDays)
+	for i := 0; i < threads; i++ {
+		go worker(jobs, results, c)
+	}
+
+	// Start parsing
 	for t := start; t.After(end) == false; t = t.AddDate(0, 0, 1) {
-		r := retrievor.MatchesResult{}
-		date := t.Format("2006-01-02")
-		r.ParsePage(date)
-		if dryRun != "true" {
-			err := rdb.DB(d.Db).Table(d.Table).Insert(r.Matches).Exec(session)
-			if err != nil {
-				return err
-			}
+		job := jobStruct{
+			t: t,
 		}
+		jobs <- job
+	}
+	close(jobs)
+	for i := 0; i < nDays; i++ {
+		<-results
 	}
 	return nil
 }
