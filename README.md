@@ -1,5 +1,7 @@
 # Bettificator CLI
 
+# Repository archived: Retrievor was merged with Bettificator [Here](https://github.com/belbet/betrievor)
+
 ## Example
 
 ```
